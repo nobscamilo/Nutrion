@@ -6,7 +6,7 @@ index 0000000..2cb5f12
 @@ -0,0 +1,55 @@
 +# Calculadora Glucémica PWA 🍞
 +
-+[![pages-build-deployment](https://github.com/nobscamilo/Nutrion/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/actions/workflows/pages/pages-build-deployment)
++[![pages-build-deployment](https://github.com/nobscamilo/Nutrion/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/nobscamilo/Nutrion/actions/workflows/pages/pages-build-deployment)
 +
 +Una aplicación web progresiva (PWA) para calcular valores glucémicos con funcionalidades offline, scanner y recetas.
 +
