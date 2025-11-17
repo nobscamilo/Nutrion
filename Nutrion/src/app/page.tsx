@@ -13,10 +13,14 @@ import FoodSearchModal from '@/components/FoodSearchModal';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import RecipeManager from '@/components/RecipeManager';
 import ExportControls from '@/components/ExportControls';
+import ExternalFoodSearch from '@/components/ExternalFoodSearch';
+import ProgressCharts from '@/components/ProgressCharts';
 import { useFoodDatabase } from '@/hooks/useFoodDatabase';
 import { useProfile } from '@/hooks/useProfile';
 import { useNutritionalCalculations } from '@/hooks/useNutritionalCalculations';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useMealHistory } from '@/hooks/useMealHistory';
+import { externalToInternalFood } from '@/lib/openFoodFactsAPI';
 import type { FoodItem, FoodEntry, UserProfile, MealType, RecipeItem } from '@/types/nutrition';
 
 export default function CalculadoraGlucemica() {
@@ -24,12 +28,14 @@ export default function CalculadoraGlucemica() {
   const { profile, saveProfile, loadProfile } = useProfile();
   const { calculateFoodEntry, calculateSummary } = useNutritionalCalculations();
   const { value: mealType, setValue: setMealType } = useLocalStorage<MealType>('mealType', 'Desayuno');
+  const { saveMeal, history } = useMealHistory();
   
   // Estados principales
   const [foodEntries, setFoodEntries] = useState<FoodEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isScannerOpen, setScannerOpen] = useState(false);
+  const [isExternalSearchOpen, setIsExternalSearchOpen] = useState(false);
   const [isProfileCollapsed, setIsProfileCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -138,11 +144,21 @@ export default function CalculadoraGlucemica() {
   }, [handleSearchAdd]);
 
   // Handlers para scanner y recetas
-  const handleScanResult = useCallback((result: any) => {
+  const handleScanResult = useCallback(async (result: any) => {
     console.log('Código escaneado:', result.code);
-    alert(`Código escaneado: ${result.code}\n(Función de búsqueda por implementar)`);
+    
+    if (result.product) {
+      // Product found in OpenFoodFacts
+      const internalFood = externalToInternalFood(result.product);
+      await addFood(internalFood.name);
+      alert(`✓ Producto agregado: ${result.product.name}\n${result.product.brand || ''}`);
+    } else {
+      // Product not found
+      alert(`Código escaneado: ${result.code}\nProducto no encontrado en la base de datos externa.\nPuedes buscarlo manualmente.`);
+    }
+    
     setScannerOpen(false);
-  }, []);
+  }, [addFood]);
 
   const handleLoadRecipe = useCallback((items: RecipeItem[]) => {
     if (confirm('¿Cargar esta plantilla? Esto reemplazará los alimentos actuales.')) {
@@ -157,6 +173,28 @@ export default function CalculadoraGlucemica() {
 
   // Calcular resumen nutricional
   const nutritionalSummary = calculateSummary(foodEntries, profile || undefined);
+
+  // Handler para guardar comida en historial
+  const handleSaveMeal = useCallback(async () => {
+    if (foodEntries.length === 0) {
+      alert('No hay alimentos para guardar');
+      return;
+    }
+
+    const summary = calculateSummary(foodEntries, profile || undefined);
+    const success = await saveMeal(
+      mealType || 'Desayuno',
+      foodEntries,
+      summary,
+      profile || undefined
+    );
+
+    if (success) {
+      alert(`✓ Comida guardada en historial\nTipo: ${mealType}\nAlimentos: ${foodEntries.length}`);
+    } else {
+      alert('Error al guardar la comida en el historial');
+    }
+  }, [foodEntries, mealType, profile, saveMeal, calculateSummary]);
 
   // Mostrar loading inicial
   if (dbLoading && foods.length === 0) {
@@ -285,6 +323,15 @@ export default function CalculadoraGlucemica() {
 
               <Button
                 variant="outline"
+                onClick={() => setIsExternalSearchOpen(true)}
+                className="min-h-[44px] flex items-center gap-2 bg-blue-50 hover:bg-blue-100"
+              >
+                <span>🌍</span>
+                {isMobile ? 'API' : 'Buscar API'}
+              </Button>
+
+              <Button
+                variant="outline"
                 onClick={handleClearAll}
                 disabled={foodEntries.length === 0}
                 className="min-h-[44px] flex items-center gap-2 text-red-600 hover:text-red-700"
@@ -322,7 +369,17 @@ export default function CalculadoraGlucemica() {
 
         {/* Export Controls */}
         <div className="bg-white rounded-lg shadow-md border border-green-100 p-4 mb-6">
-          <h3 className="text-lg font-semibold text-green-700 mb-3">📊 Exportar Datos</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+            <h3 className="text-lg font-semibold text-green-700">📊 Exportar Datos</h3>
+            <Button
+              onClick={handleSaveMeal}
+              disabled={foodEntries.length === 0}
+              className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+            >
+              <span>💾</span>
+              Guardar en Historial
+            </Button>
+          </div>
           <ExportControls
             foods={foodEntries}
             summary={nutritionalSummary}
@@ -330,6 +387,9 @@ export default function CalculadoraGlucemica() {
             mealType={mealType || 'Desayuno'}
           />
         </div>
+
+        {/* Progress Charts */}
+        <ProgressCharts className="mb-6" />
 
         {/* Recipe Manager */}
         <RecipeManager
@@ -369,6 +429,17 @@ export default function CalculadoraGlucemica() {
           onSelectFood={handleModalSelect}
           foods={foods}
         />
+
+        {/* External Food Search Modal */}
+        {isExternalSearchOpen && (
+          <ExternalFoodSearch
+            onSelectFood={async (food) => {
+              await addFood(food.name);
+              setIsExternalSearchOpen(false);
+            }}
+            onClose={() => setIsExternalSearchOpen(false)}
+          />
+        )}
 
         {/* Footer */}
         <footer className="text-center mt-8 text-sm text-gray-500">
