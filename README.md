@@ -6,15 +6,15 @@ index 0000000..2cb5f12
 @@ -0,0 +1,55 @@
 +# Calculadora Glucémica PWA 🍞
 +
-+[![pages-build-deployment](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/actions/workflows/pages/pages-build-deployment)
++[![pages-build-deployment](https://github.com/nobscamilo/Nutrion/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/actions/workflows/pages/pages-build-deployment)
 +
 +Una aplicación web progresiva (PWA) para calcular valores glucémicos con funcionalidades offline, scanner y recetas.
 +
 +## 🚀 Launch App
 +
-+[![Launch App](https://img.shields.io/badge/Launch-App-2e8b57?style=for-the-badge&logo=rocket)](https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/)
++[![Launch App](https://img.shields.io/badge/Launch-App-2e8b57?style=for-the-badge&logo=rocket)](https://nobscamilo.github.io/nutrion/)
 +
-+**[🌐 Abrir Calculadora Glucémica](https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/)**
++**[🌐 Abrir Calculadora Glucémica](https://nobscamilo.github.io/Nutrion/)**
 +
 +## ✨ Características
 +
@@ -37,8 +37,8 @@ index 0000000..2cb5f12
 +
 +1. Clona el repositorio:
 +```bash
-+git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-+cd YOUR_REPO_NAME
++git clone https://github.com/nobscamilo/Nutrion.git
++cd Nutrion
 +```
 +
 +2. Abre `index.html` en tu navegador o usa un servidor local:
