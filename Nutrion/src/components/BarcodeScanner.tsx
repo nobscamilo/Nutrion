@@ -4,11 +4,14 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getProductByBarcode, externalToInternalFood } from '@/lib/openFoodFactsAPI';
+import type { ExternalFoodItem } from '@/types/externalAPI';
 
 interface ScanResult {
   code: string;
   format: string;
   timestamp: number;
+  product?: ExternalFoodItem;
 }
 
 interface BarcodeScannerProps {
@@ -150,25 +153,47 @@ export default function BarcodeScanner({ onScanResult, onError }: BarcodeScanner
       });
 
       // Handle detection
-      window.Quagga.onDetected((data: any) => {
+      window.Quagga.onDetected(async (data: any) => {
         const code = data.codeResult.code;
         const format = data.codeResult.format;
         
         console.log('Código detectado:', code, format);
-        setStatus(`Código detectado: ${code}`);
+        setStatus(`Código detectado: ${code} - Buscando producto...`);
         
-        const result: ScanResult = {
-          code,
-          format,
-          timestamp: Date.now()
-        };
-        
-        onScanResult(result);
+        // Try to fetch product from OpenFoodFacts
+        try {
+          const productResult = await getProductByBarcode({ code });
+          
+          const result: ScanResult = {
+            code,
+            format,
+            timestamp: Date.now(),
+            product: productResult.success ? productResult.data : undefined
+          };
+          
+          if (productResult.success && productResult.data) {
+            setStatus(`Producto encontrado: ${productResult.data.name}`);
+            console.log('✓ Producto encontrado:', productResult.data.name);
+          } else {
+            setStatus(`Código: ${code} - Producto no encontrado en base de datos`);
+            console.log('⚠ Producto no encontrado en OpenFoodFacts');
+          }
+          
+          onScanResult(result);
+        } catch (err) {
+          console.error('Error fetching product:', err);
+          const result: ScanResult = {
+            code,
+            format,
+            timestamp: Date.now()
+          };
+          onScanResult(result);
+        }
         
         // Stop scanning after detection
         setTimeout(() => {
           stopScanning();
-        }, 1000);
+        }, 1500);
       });
 
       // Handle processing errors

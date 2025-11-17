@@ -44,6 +44,14 @@ export class IndexedDBService {
           if (!db.objectStoreNames.contains('ean')) {
             db.createObjectStore('ean', { keyPath: 'code' });
           }
+          
+          // Store para historial de comidas
+          if (!db.objectStoreNames.contains('mealHistory')) {
+            const historyStore = db.createObjectStore('mealHistory', { keyPath: 'id' });
+            historyStore.createIndex('date', 'date', { unique: false });
+            historyStore.createIndex('timestamp', 'timestamp', { unique: false });
+            historyStore.createIndex('mealType', 'mealType', { unique: false });
+          }
         };
 
         request.onsuccess = (event) => {
